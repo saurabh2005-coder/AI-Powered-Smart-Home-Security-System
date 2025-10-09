@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Person Detection in Browser</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- TensorFlow.js & BodyPix -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Real-time Person Detection (Browser)</h1>
+
+    <div class="video-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="controls">
+      <button id="toggle">Start</button>
+      <label>Model speed</label>
+      <select id="speed">
+        <option value="fast">fast</option>
+        <option value="balanced" selected>balanced</option>
+        <option value="accurate">accurate</option>
+      </select>
+      <button id="snapshot">Snapshot → Python backend</button>
+      <div id="status">Status: idle</div>
+    </div>
+
+    <p class="notes">
+      Detection runs fully in the browser using TensorFlow.js BodyPix. The Node server only serves files.
+    </p>
+  </div>
+
+  <script src="./main.js"></script>
+</body>
+</html>
