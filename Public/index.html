@@ -2,37 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Person Detection in Browser</title>
+  <title>AI Vision – Real-Time Person Detection</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="./styles.css" />
+  
   <!-- TensorFlow.js & BodyPix -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Real-time Person Detection (Browser)</h1>
+  <div class="hud-bg">
+    <div class="scanner-overlay"></div>
+    <div class="container">
+      <h1 class="title">
+        <span class="glow">AI Vision</span> – Real-Time Person Detection
+      </h1>
 
-    <div class="video-wrap">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="overlay"></canvas>
+      <!-- 🎥 Two videos side by side -->
+      <div class="video-grid">
+        <!-- Left: Raw Video -->
+        <div class="video-box glass">
+          <h2>Live Feed</h2>
+          <video id="video" autoplay playsinline muted></video>
+        </div>
+
+        <!-- Right: AI Output -->
+        <div class="video-box glass">
+          <h2>AI Detection</h2>
+          <canvas id="overlay"></canvas>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="toggle" class="neon-btn">Start</button>
+        <select id="speed" class="neon-select">
+          <option value="fast">Fast</option>
+          <option value="balanced" selected>Balanced</option>
+          <option value="accurate">Accurate</option>
+        </select>
+        <button id="snapshot" class="neon-btn secondary">Snapshot → Python</button>
+        <div id="status" class="status-text">Status: idle</div>
+      </div>
+
+      <p class="notes">Detection runs entirely in-browser using TensorFlow.js BodyPix.</p>
     </div>
-
-    <div class="controls">
-      <button id="toggle">Start</button>
-      <label>Model speed</label>
-      <select id="speed">
-        <option value="fast">fast</option>
-        <option value="balanced" selected>balanced</option>
-        <option value="accurate">accurate</option>
-      </select>
-      <button id="snapshot">Snapshot → Python backend</button>
-      <div id="status">Status: idle</div>
-    </div>
-
-    <p class="notes">
-      Detection runs fully in the browser using TensorFlow.js BodyPix. The Node server only serves files.
-    </p>
   </div>
 
   <script src="./main.js"></script>
