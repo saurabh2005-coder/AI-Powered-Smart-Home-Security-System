@@ -1,0 +1,9 @@
+fastapi==0.95.2
+uvicorn[standard]==0.22.0
+pillow==10.0.0
+numpy==1.23.5
+tensorflow==2.12.0
+opencv-python==4.8.1.78
+
+# Option A: face_recognition (wraps dlib) - more accurate for quick prototyping
+face_recognition==1.3.0
