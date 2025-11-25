@@ -6,4 +6,4 @@ package-lock.json
 # ignore dependencies
 node_modules/
 package-lock.json
-
+.sample.env
