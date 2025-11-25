@@ -6,6 +6,8 @@ __pycache__/
 
 # Secrets and config
 config.py
+node_modules/
+node_modules
 
 # Data files
 data/
