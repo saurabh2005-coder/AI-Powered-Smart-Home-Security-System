@@ -1,0 +1,9 @@
+credentials.json
+/__pycache__
+.env
+/node_modules
+package-lock.json
+# ignore dependencies
+node_modules/
+package-lock.json
+

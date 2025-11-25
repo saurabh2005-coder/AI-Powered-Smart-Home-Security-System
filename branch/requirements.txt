@@ -1,0 +1,12 @@
+Flask
+requests
+google-cloud-storage
+opencv-python
+numpy
+imageio-ffmpeg
+face_recognition
+dlib
+opencv-contrib-python
+twilio
+python-dotenv
+Flask-CORS
