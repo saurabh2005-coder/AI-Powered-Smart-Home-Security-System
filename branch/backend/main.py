@@ -71,13 +71,20 @@ def get_armed():
 
 @app.route('/motion_detected', methods=['POST'])
 def motion_detected():
-    data = request.get_json()
+    data = request.get_json() or {}
 
-    if 'url' in data:
-        print("URL: ", data['url'])
-        send_notification(data["url"])
+    url = data.get('url')
+    event = data.get('event', 'person_motion')
+
+    if url:
+        print("URL: ", url, "event:", event)
+        send_notification(url, event=event)
+    elif event:
+        # No URL yet but there's an event (e.g., camera moved). Send a quick notification.
+        print("Event-only notification:", event)
+        send_notification(None, event=event)
     else:
-        print("'url' not in incoming data")
+        print("No url or event in incoming data")
 
     return jsonify({}), 201
 

@@ -18,9 +18,13 @@ os.makedirs(LOCAL_STORAGE_PATH, exist_ok=True)
 
 API_ENDPOINT = "http://127.0.0.1:5000/motion_detected"
 
-def handle_detection(path_to_file):
-    """Handles processing and notification after a detection event."""
-    def action_thread(path_to_file):
+def handle_detection(path_to_file, force_notify=False):
+    """Handles processing and notification after a detection event.
+
+    If `force_notify` is True we will skip face-recognition suppression and
+    always notify (used for camera-move events).
+    """
+    def action_thread(path_to_file, force_notify=force_notify):
         # Convert input path to full path
         full_input_path = os.path.join(LOCAL_STORAGE_PATH, path_to_file)
         output_path = os.path.join(LOCAL_STORAGE_PATH, path_to_file.split(".mp4")[0] + "-out.mp4")
@@ -32,7 +36,11 @@ def handle_detection(path_to_file):
         # Send notification with local file path (URL)
         # Before notifying, check whether the video contains a registered face (if available)
         should_notify = True
-        if FACE_RECOGNITION_AVAILABLE:
+        if force_notify:
+            # caller asked to force notification (e.g., camera movement)
+            print("[DEBUG] force_notify=True - skipping face recognition and notifying")
+            should_notify = True
+        elif FACE_RECOGNITION_AVAILABLE:
             try:
                 print(f"[DEBUG] Checking face recognition for {output_path}")
                 cap = cv2.VideoCapture(output_path)
@@ -77,7 +85,9 @@ def handle_detection(path_to_file):
         if should_notify:
             url = f"http://127.0.0.1:5000/videos/{os.path.basename(output_path)}"
             data = {"url": url}
-            print(f"[DEBUG] Sending notification: {url}")
+            # mark event type so the API can format the message
+            data["event"] = "camera_moved" if force_notify else "person_motion"
+            print(f"[DEBUG] Sending notification: {url}, event={data['event']}")
             requests.post(API_ENDPOINT, json=data)
         else:
             print("[DEBUG] Skipping notification")

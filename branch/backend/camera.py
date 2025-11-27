@@ -3,6 +3,8 @@ import numpy as np
 import threading
 import datetime
 import os
+import time
+import requests
 from storage import handle_detection
 
 class Camera:
@@ -32,11 +34,53 @@ class Camera:
         non_detected_counter = 0
         current_recording_name = None
 
+        # For camera-movement forced recordings
+        move_out = None
+        move_recording_name = None
+        move_end_time = 0
+        last_move_time = 0
+
         Camera.cap = cv.VideoCapture(0)
 
         print("Camera started...")
+        prev_gray = None
+        MOVE_THRESHOLD = 20.0  # tune this if needed
         while self.armed:
-            _, frame = self.cap.read()
+            ret, frame = self.cap.read()
+            if not ret:
+                time.sleep(0.01)
+                continue
+
+            # --- Camera movement detection (global motion) ---
+            gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+            if prev_gray is None:
+                prev_gray = gray
+            else:
+                diff = cv.absdiff(prev_gray, gray)
+                mean_diff = np.mean(diff)
+                # if large global change detected, treat as camera movement
+                if mean_diff > MOVE_THRESHOLD and (time.time() - last_move_time) > 30:
+                    last_move_time = time.time()
+                    now = datetime.datetime.now()
+                    formatted_now = now.strftime("%d-%m-%y-%H-%M-%S")
+                    print("Camera movement detected at", formatted_now, "mean_diff=", mean_diff)
+                    videos_dir = os.path.join(os.path.dirname(__file__), "videos")
+                    os.makedirs(videos_dir, exist_ok=True)
+                    move_recording_name = f"{formatted_now}-move.mp4"
+                    move_recording_path = os.path.join(videos_dir, move_recording_name)
+                    fourcc = cv.VideoWriter_fourcc(*'mp4v')
+                    move_out = cv.VideoWriter(move_recording_path, fourcc, 20.0, (frame.shape[1], frame.shape[0]))
+                    move_end_time = time.time() + 10.0  # record for 10 seconds
+
+                    # send an immediate, event-only notification (no URL yet)
+                    try:
+                        requests.post("http://127.0.0.1:5000/motion_detected", json={"event": "camera_moved"}, timeout=2)
+                    except Exception:
+                        pass
+
+                prev_gray = gray
+
+            # --- Person detection (existing code) ---
             blob = cv.dnn.blobFromImage(frame, 0.007843, (300, 300), 127.5)
             self.net.setInput(blob)
             detections = self.net.forward()
@@ -72,7 +116,7 @@ class Camera:
                     fourcc = cv.VideoWriter_fourcc(*'mp4v')  # or use 'XVID'
                     self.out = cv.VideoWriter(current_recording_path, fourcc, 20.0, (frame.shape[1], frame.shape[0]))
 
-                # Write the frame into the file 'output.mp4'
+                # Write the frame into the person detection file
                 self.out.write(frame)
 
             # If no person is detected, stop recording after 50 frames
@@ -84,13 +128,41 @@ class Camera:
                         self.out = None  # set it back to None
                         handle_detection(current_recording_name)
                         current_recording_name = None
-                        
+
+            # If a move recording is active, write frames until end time
+            if move_out is not None:
+                move_out.write(frame)
+                if time.time() >= move_end_time:
+                    try:
+                        move_out.release()
+                    except Exception:
+                        pass
+                    move_out = None
+                    # process and force notify for move recording
+                    try:
+                        handle_detection(move_recording_name, force_notify=True)
+                    except Exception:
+                        pass
+                    move_recording_name = None
+
+        # cleanup on exit
         if self.out is not None:  # if VideoWriter is initialized, release it
             self.out.release()
             self.out = None  # set it back to None
             handle_detection(current_recording_name)
             current_recording_name = None
-            
+
+        if move_out is not None:
+            try:
+                move_out.release()
+            except Exception:
+                pass
+            try:
+                handle_detection(move_recording_name, force_notify=True)
+            except Exception:
+                pass
+            move_recording_name = None
+
         self.cap.release()
         print("Camera released...")
 

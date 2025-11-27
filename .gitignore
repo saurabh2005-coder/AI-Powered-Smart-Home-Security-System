@@ -19,3 +19,5 @@ embeddings/
 # Virtual environments
 venv/
 .env
+
+videos
